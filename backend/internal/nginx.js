@@ -5,6 +5,8 @@ const config = require('../lib/config');
 const utils  = require('../lib/utils');
 const error  = require('../lib/error');
 
+const NgxPidFilePath = '/usr/local/nginx/logs/nginx.pid';
+
 const internalNginx = {
 
 	/**
@@ -111,11 +113,21 @@ const internalNginx = {
 	/**
 	 * @returns {Promise}
 	 */
+
 	reload: () => {
 		return internalNginx.test()
 			.then(() => {
-				logger.info('Restarting Nginx');
-				return utils.exec('kill $(cat /usr/local/nginx/logs/nginx.pid); nginx');
+				if (fs.existsSync(NgxPidFilePath)) {
+					const ngxPID = fs.readFileSync(NgxPidFilePath, 'utf8').trim();
+					if (ngxPID.length > 0) {
+						logger.info('Killing Nginx');
+						utils.exec(`kill ${ngxPID}`);
+					}
+				}
+				logger.info('Starting Nginx after three seconds');
+				setTimeout(() => {
+					utils.execfg('nginx');
+				}, 3000);
 			});
 	},
 
