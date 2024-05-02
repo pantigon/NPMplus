@@ -24,12 +24,12 @@ ARG NODE_ENV=production \
     TARGETARCH
 WORKDIR /build/backend
 RUN apk upgrade --no-cache -a && \
-    apk add --no-cache ca-certificates nodejs-current yarn && \
+    apk add --no-cache ca-certificates nodejs yarn && \
     yarn global add clean-modules && \
     if [ "$TARGETARCH" = "amd64" ]; then \
-    npm_config_target_platform=linux npm_config_target_arch=x64 yarn install --no-lockfile; \
+      npm_config_target_platform=linux npm_config_target_arch=x64 yarn install --no-lockfile; \
     elif [ "$TARGETARCH" = "arm64" ]; then \
-    npm_config_target_platform=linux npm_config_target_arch=arm64 yarn install --no-lockfile; \
+      npm_config_target_platform=linux npm_config_target_arch=arm64 yarn install --no-lockfile; \
     fi && \
     clean-modules --yes && \
     yarn cache clean --all
@@ -69,8 +69,8 @@ COPY --from=zoeyvid/curl-quic:380     /usr/local/bin/curl /usr/local/bin/curl
 
 RUN apk upgrade --no-cache -a && \
     apk add --no-cache ca-certificates tzdata tini \
+    nodejs \
     bash nano \
-    nodejs-current \
     openssl apache2-utils \
     lua5.1-lzlib lua5.1-socket \
     coreutils grep findutils jq shadow su-exec \
