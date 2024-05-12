@@ -48,6 +48,7 @@ RUN apk upgrade --no-cache -a && \
     sed -i "s|;\?include\s*=.*|include = /etc/php/php-fpm.d/*.conf|g" /etc/php/php-fpm.conf && \
     sed -i "s|;\?session.save_handler\s*=.*|session.save_handler = redis|g" /etc/php/php.ini && \
     sed -i "s|;\?session.save_path\s*=.*|session.save_path = unix:///run/valkey.sock|g" /etc/php/php.ini && \
+    sed -i "s|;\?session.name\s*=.*|session.name = NPMPLUSSESSIONID|g" /etc/php/php.ini && \
     sed -i "s|;\?session.auto_start\s*=.*|session.auto_start = 1|g" /etc/php/php.ini && \
     sed -i "s|;\?session.use_strict_mode\s*=.*|session.use_strict_mode = 1|g" /etc/php/php.ini && \
     sed -i "s|;\?session.cookie_secure\s*=.*|session.cookie_secure = 1|g" /etc/php/php.ini && \
