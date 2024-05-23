@@ -42,6 +42,7 @@ if [ -z "$TZ" ] || ! echo "$TZ" | grep -q "^[A-Za-z0-9_+-]\+/[A-Za-z0-9_+-]\+$";
     sleep inf
 fi
 
+
 if ! echo "$PUID" | grep -q "^[0-9]\+$"; then
     echo "PUID needs to be a number."
     sleep inf
@@ -52,10 +53,17 @@ if ! echo "$PGID" | grep -q "^[0-9]\+$"; then
     sleep inf
 fi
 
+if [ "$PGID" != "0" ] && [ "$PUID" = "0" ]; then
+    echo "You've set PGID but not PUID. Which is required."
+    sleep inf
+fi
+
+
 if ! echo "$GOAIWSP" | grep -q "^[0-9]\+$"; then
     echo "GOAIWSP needs to be a number."
     sleep inf
 fi
+
 
 if ! echo "$NPM_PORT" | grep -q "^[0-9]\+$"; then
     echo "NPM_PORT needs to be a number."
@@ -66,6 +74,29 @@ if ! echo "$GOA_PORT" | grep -q "^[0-9]\+$"; then
     echo "GOA_PORT needs to be a number."
     sleep inf
 fi
+
+
+if ! echo "$NPM_LISTEN_LOCALHOST" | grep -q "^true$\|^false$"; then
+    echo "NPM_LISTEN_LOCALHOST needs to be true or false."
+    sleep inf
+fi
+
+if [ "$NPM_LISTEN_LOCALHOST" = "true" ]; then
+    export NPM_IPV4_BINDING="127.0.0.1"
+    export NPM_IPV6_BINDING="[::1]"
+fi
+
+
+if ! echo "$GOA_LISTEN_LOCALHOST" | grep -q "^true$\|^false$"; then
+    echo "GOA_LISTEN_LOCALHOST needs to be true or false."
+    sleep inf
+fi
+
+if [ "$GOA_LISTEN_LOCALHOST" = "true" ]; then
+    export GOA_IPV4_BINDING="127.0.0.1"
+    export GOA_IPV6_BINDING="[::1]"
+fi
+
 
 if ! echo "$IPV4_BINDING" | grep -q "^[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+$"; then
     echo "IPV4_BINDING needs to be a IPv4-Address: four blocks of numbers separated by dots."
@@ -81,6 +112,7 @@ if ! echo "$GOA_IPV4_BINDING" | grep -q "^[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+$"; 
     echo "GOA_IPV4_BINDING needs to be a IPv4-Address: four blocks of numbers separated by dots."
     sleep inf
 fi
+
 
 if ! echo "$IPV6_BINDING" | grep -q "^\[[0-9a-f:]\+\]$"; then
     echo "IPV6_BINDING needs to be a IPv6-Address inside []: lower letters a-f, numbers 0-9 and colons."
@@ -112,15 +144,6 @@ if ! echo "$GOA_DISABLE_IPV6" | grep -q "^true$\|^false$"; then
     sleep inf
 fi
 
-if ! echo "$NPM_LISTEN_LOCALHOST" | grep -q "^true$\|^false$"; then
-    echo "NPM_LISTEN_LOCALHOST needs to be true or false."
-    sleep inf
-fi
-
-if ! echo "$GOA_LISTEN_LOCALHOST" | grep -q "^true$\|^false$"; then
-    echo "GOA_LISTEN_LOCALHOST needs to be true or false."
-    sleep inf
-fi
 
 if ! echo "$DEFAULT_CERT_ID" | grep -q "^[0-9]\+$"; then
     echo "DEFAULT_CERT_ID needs to be a number."
@@ -187,13 +210,29 @@ if ! echo "$IPRT" | grep -q "^[0-9]\+$"; then
     sleep inf
 fi
 
+
 if ! echo "$GOA" | grep -q "^true$\|^false$"; then
     echo "GOA needs to be true or false."
     sleep inf
 fi
 
+if [ "$GOA" = "true" ] && [ "$LOGROTATE" = "false" ]; then
+    echo "You've enabled GOA but not LOGROTATE. Which is required."
+    sleep inf
+fi
+
+if [ -s /data/etc/goaccess/geoip/GeoLite2-Country.mmdb ] && [ -s /data/etc/goaccess/geoip/GeoLite2-City.mmdb ] && [ -s /data/etc/goaccess/geoip/GeoLite2-ASN.mmdb ] && echo "$GOACLA" | grep -vq "geoip-database"; then
+    export GOACLA="$GOACLA --geoip-database=/data/etc/goaccess/geoip/GeoLite2-Country.mmdb --geoip-database=/data/etc/goaccess/geoip/GeoLite2-City.mmdb --geoip-database=/data/etc/goaccess/geoip/GeoLite2-ASN.mmdb"
+fi
+
 if [ -n "$GOACLA" ] && ! echo "$GOACLA" | grep -q "^-[a-zA-Z0-9 =/_.-]\+$"; then
     echo "GOACLA must start with a hyphen and can consist of lower and upper letters a-z A-Z, numbers 0-9, spaces, equals signs, slashes, underscores, dots and hyphens."
+    sleep inf
+fi
+
+
+if [ -n "$PHP_APKS" ] && [ "$PHP82" = "false" ] && [ "$PHP83" = "false" ]; then
+    echo "PHP_APKS is set, but PHP82 and PHP83 is disabled."
     sleep inf
 fi
 
@@ -205,6 +244,7 @@ fi
 
 if [ -n "$PHP82_APKS" ] && [ "$PHP82" = "false" ]; then
     echo "PHP82_APKS is set, but PHP82 is disabled."
+    sleep inf
 fi
 
 if [ -n "$PHP82_APKS" ] && ! echo "$PHP82_APKS" | grep -q "^[a-z0-9 _-]\+$"; then
@@ -220,6 +260,7 @@ fi
 
 if [ -n "$PHP83_APKS" ] && [ "$PHP83" = "false" ]; then
     echo "PHP83_APKS is set, but PHP83 is disabled."
+    sleep inf
 fi
 
 if [ -n "$PHP83_APKS" ] && ! echo "$PHP83_APKS" | grep -q "^[a-z0-9 _-]\+$"; then
@@ -233,60 +274,16 @@ if [ -n "$NC_AIO" ] && ! echo "$NC_AIO" | grep -q "^true$\|^false$"; then
     sleep inf
 fi
 
-if [ -n "$NC_AIO" ] && ! echo "$NC_DOMAIN" | grep -q "^[a-z0-9.]\+$"; then
-    echo "NC_DOMAIN can consist of lower letters a-z, numbers 0-9 and dots and is required in AIO mode."
+if [ "$NC_AIO" = "true" ] && ([ -z "$NC_DOMAIN" ] || ! echo "$NC_DOMAIN" | grep -q "^[a-z0-9.]\+$"); then
+    echo "NC_DOMAIN must consist of lower letters a-z, numbers 0-9 and dots and is required in AIO mode."
     sleep inf
-fi
-
-
-if [ "$PGID" != "0" ] && [ "$PUID" = "0" ]; then
-    echo "You've set PGID but not PUID. Resetting PGID to 0."
-    export PGID="0"
-fi
-
-if [ "$GOA" = "true" ] && [ "$LOGROTATE" = "false" ]; then
-    echo "You've enabled GOA but not LOGROTATE. Enabling LOGROTATE."
-    export LOGROTATE="true"
 fi
 
 if [ "$NC_AIO" = "true" ]; then
     export DISABLE_HTTP="true"
 fi
 
-if [ "$NPM_LISTEN_LOCALHOST" = "true" ]; then
-    export NPM_IPV4_BINDING="127.0.0.1"
-    export NPM_IPV6_BINDING="[::1]"
-fi
 
-if [ "$GOA_LISTEN_LOCALHOST" = "true" ]; then
-    export GOA_IPV4_BINDING="127.0.0.1"
-    export GOA_IPV6_BINDING="[::1]"
-fi
-
-
-if [ -s /data/etc/goaccess/geoip/GeoLite2-Country.mmdb ] && [ -s /data/etc/goaccess/geoip/GeoLite2-City.mmdb ] && [ -s /data/etc/goaccess/geoip/GeoLite2-ASN.mmdb ] && echo "$GOACLA" | grep -vq "geoip-database"; then
-    export GOACLA="$GOACLA --geoip-database=/data/etc/goaccess/geoip/GeoLite2-Country.mmdb --geoip-database=/data/etc/goaccess/geoip/GeoLite2-City.mmdb --geoip-database=/data/etc/goaccess/geoip/GeoLite2-ASN.mmdb"
-fi
-
-
-if [ "$PHP82" = "true" ] || [ "$PHP83" = "true" ]; then
-    # From https://github.com/nextcloud/all-in-one/pull/1377/files
-    if [ -n "$PHP_APKS" ]; then
-        for apk in $(echo "$PHP_APKS" | tr " " "\n"); do
-            if ! echo "$apk" | grep -q "^php-.*$"; then
-                echo "$apk is a non allowed value."
-                echo "It needs to start with \"php-\"."
-                echo "It is set to \"$apk\"."
-                sleep inf
-            fi
-
-            echo "Installing $apk via apk..."
-            if ! apk add --no-cache "$apk" > /dev/null 2>&1; then
-                echo "The apk \"$apk\" was not installed!"
-            fi
-        done
-    fi
-fi
 
 if [ "$PHP82" = "true" ]; then
 
@@ -348,6 +345,25 @@ if [ "$PHP83" = "true" ]; then
 
 elif [ "$FULLCLEAN" = "true" ]; then
     rm -vrf /data/php/83
+fi
+
+if [ "$PHP82" = "true" ] || [ "$PHP83" = "true" ]; then
+    # From https://github.com/nextcloud/all-in-one/pull/1377/files
+    if [ -n "$PHP_APKS" ]; then
+        for apk in $(echo "$PHP_APKS" | tr " " "\n"); do
+            if ! echo "$apk" | grep -q "^php-.*$"; then
+                echo "$apk is a non allowed value."
+                echo "It needs to start with \"php-\"."
+                echo "It is set to \"$apk\"."
+                sleep inf
+            fi
+
+            echo "Installing $apk via apk..."
+            if ! apk add --no-cache "$apk" > /dev/null 2>&1; then
+                echo "The apk \"$apk\" was not installed!"
+            fi
+        done
+    fi
 fi
 
 
