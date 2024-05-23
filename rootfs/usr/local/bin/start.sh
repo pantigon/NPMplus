@@ -19,19 +19,20 @@ touch /data/.env
 . /data/.env
 
 
-if [ -n "$NPM_CERT_ID" ] && ! echo "$NPM_CERT_ID" | grep -q "^[0-9]\+$"; then
-    echo "NPM_CERT_ID needs to be a number."
-    echo "NPM_CERT_ID is deprecated, please change it to DEFAULT_CERT_ID"
+if [ -n "$NPM_CERT_ID" ]; then
+    echo "NPM_CERT_ID is replaced by DEFAULT_CERT_ID, please change it to DEFAULT_CERT_ID"
     sleep inf
 fi
 
-if [ -n "$NPM_CERT_ID" ] && [ -z "$DEFAULT_CERT_ID" ]; then
-    echo "NPM_CERT_ID is deprecated, please change it to DEFAULT_CERT_ID"
-    export DEFAULT_CERT_ID="$NPM_CERT_ID"
+if [ -n "$PHP81" ]; then
+    find /data/nginx -type f -name '*.conf' -not -path "/data/nginx/custom/*" -exec sed -i "s|fastcgi_pass php81;|fastcgi_pass php82;|g" {} \;
+    echo "PHP81 was removed, please use PHP82 or PHP83"
+    sleep inf
 fi
 
-if [ -n "$NPM_CERT_ID" ] && [ -n "$DEFAULT_CERT_ID" ]; then
-    echo "You've set DEFAULT_CERT_ID, but didn't removed NPM_CERT_ID, please remove it."
+if [ -n "$PHP81_APKS" ]; then
+    find /data/nginx -type f -name '*.conf' -not -path "/data/nginx/custom/*" -exec sed -i "s|fastcgi_pass php81;|fastcgi_pass php82;|g" {} \;
+    echo "PHP81_APKS was removed, please use PHP82_APKS or PHP83_APKS"
     sleep inf
 fi
 
@@ -196,19 +197,14 @@ if [ -n "$GOACLA" ] && ! echo "$GOACLA" | grep -q "^-[a-zA-Z0-9 =/_.-]\+$"; then
     sleep inf
 fi
 
-if ! echo "$PHP81" | grep -q "^true$\|^false$"; then
-    echo "PHP81 needs to be true or false."
-    sleep inf
-fi
-
-if [ -n "$PHP81_APKS" ] && ! echo "$PHP81_APKS" | grep -q "^[a-z0-9 _-]\+$"; then
-    echo "PHP81_APKS can consist of lower letters a-z, numbers 0-9, spaces, underscores and hyphens."
-    sleep inf
-fi
 
 if ! echo "$PHP82" | grep -q "^true$\|^false$"; then
     echo "PHP82 needs to be true or false."
     sleep inf
+fi
+
+if [ -n "$PHP82_APKS" ] && [ "$PHP82" = "false" ]; then
+    echo "PHP82_APKS is set, but PHP82 is disabled."
 fi
 
 if [ -n "$PHP82_APKS" ] && ! echo "$PHP82_APKS" | grep -q "^[a-z0-9 _-]\+$"; then
@@ -219,6 +215,21 @@ fi
 if ! echo "$PHP83" | grep -q "^true$\|^false$"; then
     echo "PHP83 needs to be true or false."
     sleep inf
+fi
+
+if [ -n "$PHP83_APKS" ] && ! echo "$PHP83_APKS" | grep -q "^[a-z0-9 _-]\+$"; then
+    echo "PHP83_APKS can consist of lower letters a-z, numbers 0-9, spaces, underscores and hyphens."
+    sleep inf
+fi
+
+
+if ! echo "$PHP83" | grep -q "^true$\|^false$"; then
+    echo "PHP83 needs to be true or false."
+    sleep inf
+fi
+
+if [ -n "$PHP83_APKS" ] && [ "$PHP83" = "false" ]; then
+    echo "PHP83_APKS is set, but PHP83 is disabled."
 fi
 
 if [ -n "$PHP83_APKS" ] && ! echo "$PHP83_APKS" | grep -q "^[a-z0-9 _-]\+$"; then
@@ -268,33 +279,13 @@ if [ -s /data/etc/goaccess/geoip/GeoLite2-Country.mmdb ] && [ -s /data/etc/goacc
 fi
 
 
-# From https://github.com/nextcloud/all-in-one/pull/1377/files
-if [ -n "$PHP_APKS" ]; then
-    for apk in $(echo "$PHP_APKS" | tr " " "\n"); do
-        if ! echo "$apk" | grep -q "^php-.*$"; then
-            echo "$apk is a non allowed value."
-            echo "It needs to start with \"php-\"."
-            echo "It is set to \"$apk\"."
-            sleep inf
-        fi
-
-        echo "Installing $apk via apk..."
-        if ! apk add --no-cache "$apk" > /dev/null 2>&1; then
-            echo "The apk \"$apk\" was not installed!"
-        fi
-    done
-fi
-
-if [ "$PHP81" = "true" ]; then
-
-    apk add --no-cache php81-fpm
-
+if [ "$PHP82" = "true" ] || [ "$PHP83" = "true" ]; then
     # From https://github.com/nextcloud/all-in-one/pull/1377/files
-    if [ -n "$PHP81_APKS" ]; then
-        for apk in $(echo "$PHP81_APKS" | tr " " "\n"); do
-            if ! echo "$apk" | grep -q "^php81-.*$"; then
+    if [ -n "$PHP_APKS" ]; then
+        for apk in $(echo "$PHP_APKS" | tr " " "\n"); do
+            if ! echo "$apk" | grep -q "^php-.*$"; then
                 echo "$apk is a non allowed value."
-                echo "It needs to start with \"php81-\"."
+                echo "It needs to start with \"php-\"."
                 echo "It is set to \"$apk\"."
                 sleep inf
             fi
@@ -305,15 +296,6 @@ if [ "$PHP81" = "true" ]; then
             fi
         done
     fi
-
-    mkdir -vp /data/php
-    cp -varnT /etc/php81 /data/php/81
-    sed -i "s|;\?listen\s*=.*|listen = /run/php81.sock|g" /data/php/81/php-fpm.d/www.conf
-    sed -i "s|;\?error_log\s*=.*|error_log = /proc/self/fd/2|g" /data/php/81/php-fpm.conf
-    sed -i "s|;\?include\s*=.*|include = /data/php/81/php-fpm.d/*.conf|g" /data/php/81/php-fpm.conf
-
-elif [ "$FULLCLEAN" = "true" ]; then
-    rm -vrf /data/php/81
 fi
 
 if [ "$PHP82" = "true" ]; then
@@ -515,7 +497,7 @@ if [ -s "$DB_SQLITE_FILE" ]; then
 fi
 
 if [ "$FULLCLEAN" = "true" ]; then
-    if [ "$PHP81" != "true" ] && [ "$PHP82" != "true" ] && [ "$PHP83" != "true" ]; then
+    if [ "$PHP82" != "true" ] && [ "$PHP83" != "true" ]; then
         rm -vrf /data/php
     fi
 fi
@@ -918,11 +900,7 @@ if [ "$PUID" != "0" ]; then
          /tmp \
         -not \( -uid "$PUID" -and -gid "$PGID" \) \
         -exec chown "$PUID:$PGID" {} \;
-    
-    if [ "$PHP81" = "true" ]; then
-        sed -i "s|user =.*|;user = root|" /data/php/81/php-fpm.d/www.conf
-        sed -i "s|group =.*|;group = root|" /data/php/81/php-fpm.d/www.conf
-    fi
+
     if [ "$PHP82" = "true" ]; then
         sed -i "s|user =.*|;user = root|" /data/php/82/php-fpm.d/www.conf
         sed -i "s|group =.*|;group = root|" /data/php/82/php-fpm.d/www.conf
@@ -944,11 +922,7 @@ else
          /tmp \
         -not \( -uid 0 -and -gid 0 \) \
         -exec chown 0:0 {} \;
-    
-    if [ "$PHP81" = "true" ]; then
-        sed -i "s|;user =.*|user = root|" /data/php/81/php-fpm.d/www.conf
-        sed -i "s|;group =.*|group = root|" /data/php/81/php-fpm.d/www.conf
-    fi
+
     if [ "$PHP82" = "true" ]; then
         sed -i "s|;user =.*|user = root|" /data/php/82/php-fpm.d/www.conf
         sed -i "s|;group =.*|group = root|" /data/php/82/php-fpm.d/www.conf
