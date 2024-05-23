@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# todo: acme.sh
+
 while true; do
     if [ "$LOGROTATE" = "true" ]; then
         logrotate --state /data/etc/logrotate.status /etc/logrotate;

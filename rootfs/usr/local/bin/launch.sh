@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# todo: version
+
 echo "
 -------------------------------------
  _ _  ___  __ __       _
@@ -41,7 +43,6 @@ if ! PHP_INI_SCAN_DIR=/etc/php/conf.d php-fpm83 -c /etc/php -y /etc/php/php-fpm.
     sleep inf
 fi
 
-#aio.sh &
 cron.sh &
 # shellcheck disable=SC2086
 if [ "$GOA" = "true" ]; then while true; do goaccess --no-global-config --num-tests=0 --tz="$TZ" --date-format="%d/%b/%Y" --time-format="%H:%M:%S" --log-format='[%d:%t %^] %v %h %T "%r" %s %b %b %R %u' --no-ip-validation --addr=127.0.0.1 --port="$GOAIWSP" \

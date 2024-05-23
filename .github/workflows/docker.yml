@@ -50,6 +50,7 @@ jobs:
       - name: version
         run: |
           version="$(cat .version)+$(git rev-parse --short HEAD)"
+          # todo: embed version somewhere
           #sed -i "s|\"0.0.0\"|\"$version\"|g" src/
       - name: Build
         uses: docker/build-push-action@v5

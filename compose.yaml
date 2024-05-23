@@ -10,6 +10,7 @@ services:
 #      - "/opt/npm-letsencrypt:/etc/letsencrypt" # Only needed for first time migration from original nginx-proxy-manager to this fork
     environment:
       - "TZ=Europe/Berlin" # set timezone, required
+# todo move to ui
 #      - "PUID=1000" # set group id, default 0 (root)
 #      - "PGID=1000" # set user id, default 0 (root), requires PUID
 #      - "GOAIWSP=48684" # internal port of goaccess, always bound to 127.0.0.1, default 48683, you need to change it, if you want to run multiple npm with goaccess instances in network mode host

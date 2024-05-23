@@ -80,6 +80,7 @@ COPY --from=crowdsec /src/crowdsec-nginx-bouncer/lua-mod/templates/captcha.html 
 COPY --from=crowdsec /src/crowdsec-nginx-bouncer/lua-mod/config_example.conf    /usr/local/nginx/conf/conf.d/include/crowdsec.conf
 COPY --from=crowdsec /src/crowdsec-nginx-bouncer/nginx/crowdsec_nginx.conf      /usr/local/nginx/conf/conf.d/include/crowdsec_nginx.conf
 
+# todo move to ui
 ENV PUID=0 \
     PGID=0 \
     GOAIWSP=48683 \
