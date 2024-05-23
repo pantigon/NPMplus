@@ -212,16 +212,6 @@ if [ -n "$PHP82_APKS" ] && ! echo "$PHP82_APKS" | grep -q "^[a-z0-9 _-]\+$"; the
     sleep inf
 fi
 
-if ! echo "$PHP83" | grep -q "^true$\|^false$"; then
-    echo "PHP83 needs to be true or false."
-    sleep inf
-fi
-
-if [ -n "$PHP83_APKS" ] && ! echo "$PHP83_APKS" | grep -q "^[a-z0-9 _-]\+$"; then
-    echo "PHP83_APKS can consist of lower letters a-z, numbers 0-9, spaces, underscores and hyphens."
-    sleep inf
-fi
-
 
 if ! echo "$PHP83" | grep -q "^true$\|^false$"; then
     echo "PHP83 needs to be true or false."
