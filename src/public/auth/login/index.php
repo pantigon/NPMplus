@@ -28,7 +28,8 @@ if (array_key_exists("AUTH", $_SESSION) && $_SESSION["AUTH"] === true && array_k
 
 <body>
 <div style="text-align: center;">
-    <?php if (!array_key_exists("email", $_POST) || !array_key_exists("pswd", $_POST)) { ?>
+    <?php function login($msg): void
+    { ?>
     <h1>Login</h1>
     <form method="post">
         <label for="email">E-Mail: </label><input type="email" name="email" id="email" maxlength="255" required><br>
@@ -38,69 +39,64 @@ if (array_key_exists("AUTH", $_SESSION) && $_SESSION["AUTH"] === true && array_k
         <input type="submit" value="Login" onClick="this.hidden=true;">
         <b></b>
     </form>
-        <?php if (array_key_exists("msg", $_GET)) {
-            $msg = match ($_GET["msg"]) {
-                "adne" => "Account does not exist.",
-                "wpw" => "Wrong password.",
-                "mtotp" => "Missing TOTP.",
-                "wtotp" => "Wrong TOTP.",
-                default => "Please login.",
-            };
-        } else {
-            $msg = "Please login.";
-        }
+        <?php
+        $msg = match ($msg) {
+            "adne" => "Account does not exist.",
+            "wpw" => "Wrong password.",
+            "mtotp" => "Missing TOTP.",
+            "wtotp" => "Wrong TOTP.",
+            default => "Please login.",
+        };
         echo "<p><b>Note: " . $msg . "</b></p>";
-    } else {
-        require_once __DIR__ . "/../../../functions/email.php";
-        $_SESSION["LOGIN_TIME"] = time();
-        $pswd = $_POST["pswd"];
-        $email = $_POST["email"];
-        if (!empty($_POST["totp"])) {
-            $totp = $_POST["totp"];
-        }
+    }
+        if (!array_key_exists("email", $_POST) || !array_key_exists("pswd", $_POST)) {
+            login("none");
+        } else {
+            require_once __DIR__ . "/../../../functions/email.php";
+            $_SESSION["LOGIN_TIME"] = time();
+            $pswd = $_POST["pswd"];
+            $email = $_POST["email"];
+            if (!empty($_POST["totp"])) {
+                $totp = $_POST["totp"];
+            }
 
-        $query = $db->prepare("SELECT * FROM auth WHERE email=:email");
-        $query->bindValue(":email", $email);
-        $result = $query->execute()->fetchArray();
+            $query = $db->prepare("SELECT * FROM auth WHERE email=:email");
+            $query->bindValue(":email", $email);
+            $result = $query->execute()->fetchArray();
 
-        if (is_array($result) && validateEmail($email)) {
-            if (!password_verify($pswd, $result["pswd"])) {
-                sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
-                header("Location: /auth/login?msg=wpw", true, 307);
-                exit;
-            } else {
-                if (empty($result["totp"])) {
-                    sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " logged into your account");
-                    $_SESSION["AUTH"] = true;
-                    header("Location: /", true, 307);
-                    exit;
+            if (is_array($result) && validateEmail($email)) {
+                if (!password_verify($pswd, $result["pswd"])) {
+                    sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
+                    login("wpw");
                 } else {
-                    if (empty($totp)) {
-                        sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
-                        header("Location: /auth/login?msg=mtotp", true, 307);
+                    if (empty($result["totp"])) {
+                        sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " logged into your account");
+                        $_SESSION["AUTH"] = true;
+                        header("Location: /", true, 307);
                         exit;
                     } else {
-                        require_once __DIR__ . "/../../../functions/totp.php";
-                        if ($totp === totp($result["totp"])) {
-                            sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " logged into your account");
-                            $_SESSION["AUTH"] = true;
-                            header("Location: /", true, 307);
-                            exit;
-                        } else {
+                        if (empty($totp)) {
                             sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
-                            header("Location: /auth/login?msg=wtotp", true, 307);
-                            exit;
+                            login("mtotp");
+                        } else {
+                            require_once __DIR__ . "/../../../functions/totp.php";
+                            if ($totp === totp($result["totp"])) {
+                                sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " logged into your account");
+                                $_SESSION["AUTH"] = true;
+                                header("Location: /", true, 307);
+                                exit;
+                            } else {
+                                sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
+                                login("wtotp");
+                            }
                         }
+
                     }
-
                 }
+            } else {
+                login("adne");
             }
-        } else {
-            header("Location: /auth/login?msg=adne", true, 307);
-            exit;
-        }
-
-    } ?>
+        } ?>
 </div>
 </body>
 <?php } ?>
