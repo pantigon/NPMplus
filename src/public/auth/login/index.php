@@ -47,7 +47,7 @@ if (array_key_exists("AUTH", $_SESSION) && $_SESSION["AUTH"] === true && array_k
             "wtotp" => "Wrong TOTP.",
             default => "Please login.",
         };
-        echo "<p><b>Note: " . $msg . "</b></p>";
+        echo "<p><strong>Note: " . $msg . "</strong></p>";
     }
         if (!array_key_exists("email", $_POST) || !array_key_exists("pswd", $_POST)) {
             login("none");
