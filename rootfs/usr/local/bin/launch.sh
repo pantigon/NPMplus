@@ -49,7 +49,7 @@ if [ "$GOA" = "true" ]; then while true; do goaccess --no-global-config --num-te
                                 -f /data/nginx/access.log --real-time-html -o /tmp/goa/index.html --persist --restore --db-path=/data/etc/goaccess/data -b /etc/goaccess/browsers.list -b /etc/goaccess/podcast.list $GOACLA; done; fi &
 if [ "$PHP82" = "true" ]; then PHP_INI_SCAN_DIR=/data/php/82/conf.d php-fpm82 -c /data/php/82 -y /data/php/82/php-fpm.conf -FOR; fi &
 if [ "$PHP83" = "true" ]; then PHP_INI_SCAN_DIR=/data/php/83/conf.d php-fpm82 -c /data/php/83 -y /data/php/83/php-fpm.conf -FOR; fi &
-valkey-server --loglevel warning --bind "" --unixsocket /run/valkey.sock --unixsocketperm 666 --dir "/tmp" &
+valkey-server --protected-mode yes --loglevel warning --bind "" --unixsocket /run/valkey.sock --unixsocketperm 666 --dir "/tmp" &
 PHP_INI_SCAN_DIR=/etc/php/conf.d php-fpm83 -c /etc/php -y /etc/php/php-fpm.conf -FOR &
 nginx -e stderr
 
