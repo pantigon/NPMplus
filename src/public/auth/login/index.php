@@ -2,15 +2,18 @@
 require_once __DIR__ . "/../../../functions/database.php";
 $db = db();
 if ($db->querySingle("SELECT COUNT(*) FROM auth") === 0) {
-    session_unset();
     session_destroy();
     header('Location: /auth/setup', true, 307);
     exit;
 }
-if (array_key_exists("AUTH", $_SESSION) && $_SESSION["AUTH"] === true && array_key_exists("LOGIN_TIME", $_SESSION) && (time() - $_SESSION["LOGIN_TIME"] < 3600)) {
+
+require_once __DIR__ . "/../../../functions/auth.php";
+if (isAuthenticated()) {
     header("Location: /", true, 307);
     exit;
-} else { ?>
+} else {
+    session_unset();
+    ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -54,39 +57,35 @@ if (array_key_exists("AUTH", $_SESSION) && $_SESSION["AUTH"] === true && array_k
         } else {
             require_once __DIR__ . "/../../../functions/email.php";
             $_SESSION["LOGIN_TIME"] = time();
-            $pswd = $_POST["pswd"];
-            $email = $_POST["email"];
-            if (!empty($_POST["totp"])) {
-                $totp = $_POST["totp"];
-            }
-
             $query = $db->prepare("SELECT * FROM auth WHERE email=:email");
-            $query->bindValue(":email", $email);
-            $result = $query->execute()->fetchArray();
+            $query->bindValue(":email", $_POST["email"]);
+            $queryresult = $query->execute()->fetchArray();
 
-            if (is_array($result) && validateEmail($email)) {
-                if (!password_verify($pswd, $result["pswd"])) {
-                    sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
+            if (is_array($queryresult) && validateEmail($_POST["email"])) {
+                if (!password_verify($_POST["pswd"], $queryresult["pswd"])) {
+                    sendMail($_POST["email"], "Failed Login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
                     login("wpw");
                 } else {
-                    if (empty($result["totp"])) {
-                        sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " logged into your account");
-                        $_SESSION["AUTH"] = true;
+                    if (empty($queryresult["totp"])) {
+                        sendMail($_POST["email"], "New Login", $_SERVER["REMOTE_ADDR"] . " logged into your account");
+                        $_SESSION["AUTH_PW_HASH"] = hash("sha256", $queryresult["pswd"]);
                         header("Location: /", true, 307);
                         exit;
                     } else {
-                        if (empty($totp)) {
-                            sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
+                        if (empty($_POST["totp"])) {
+                            sendMail($_POST["email"], "Failed Login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
                             login("mtotp");
                         } else {
                             require_once __DIR__ . "/../../../functions/totp.php";
-                            if ($totp === totp($result["totp"])) {
-                                sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " logged into your account");
-                                $_SESSION["AUTH"] = true;
+                            if ($_POST["totp"] === totp($queryresult["totp"])) {
+                                sendMail($_POST["email"], "New Login", $_SERVER["REMOTE_ADDR"] . " logged into your account");
+                                $_SESSION["AUTH_EMAIL"] = $_POST["email"];
+                                $_SESSION["AUTH_PW_HASH"] = hash("sha256", $queryresult["pswd"]);
+                                $_SESSION["AUTH_TOTP_HASH"] = hash("sha256", $queryresult["totp"]);
                                 header("Location: /", true, 307);
                                 exit;
                             } else {
-                                sendMail($email, "login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
+                                sendMail($_POST["email"], "Failed Login", $_SERVER["REMOTE_ADDR"] . " failed to login into your account.");
                                 login("wtotp");
                             }
                         }

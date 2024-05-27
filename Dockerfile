@@ -28,7 +28,7 @@ SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 ARG CRS_VER=v4.2.0
 
 COPY rootfs /
-COPY src /html/app
+COPY src /app/src
 
 COPY --from=zoeyvid/curl-quic:388    /usr/local/bin/curl          /usr/local/bin/curl
 COPY --from=zoeyvid/valkey-static:14 /usr/local/bin/valkey-cli    /usr/local/bin/valkey-cli
@@ -55,6 +55,8 @@ RUN apk upgrade --no-cache -a && \
     sed -i "s|;\?session.cookie_secure\s*=.*|session.cookie_secure = 1|g" /etc/php/php.ini && \
     sed -i "s|;\?session.cookie_httponly\s*=.*|session.cookie_httponly = 1|g" /etc/php/php.ini && \
     sed -i "s|;\?session.cookie_samesite\s*=.*|session.cookie_samesite = Strict|g" /etc/php/php.ini && \
+    \
+    mv -v /app/src/config.php.example /app/src/config.php && \
     \
     curl https://raw.githubusercontent.com/acmesh-official/acme.sh/master/acme.sh | sh -s -- --install-online --home /usr/local/acme.sh --nocron && \
     ln -s /usr/local/acme.sh/acme.sh /usr/local/bin/acme.sh && \
