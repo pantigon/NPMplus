@@ -25,7 +25,7 @@ RUN apk upgrade --no-cache -a && \
 FROM zoeyvid/nginx-quic:287
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
-ARG CRS_VER=v4.2.0
+ARG CRS_VER=v4.3.0
 
 COPY rootfs /
 COPY src /app/src
